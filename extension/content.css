@@ -1,0 +1,5 @@
+::highlight(sema-sentence) { background-color: rgba(124, 140, 255, 0.22); }
+::highlight(sema-word) { background-color: rgba(124, 140, 255, 0.55); color: inherit; }
+.sema-toast { position: fixed; z-index: 2147483647; left: 50%; bottom: 80px; transform: translateX(-50%);
+  background: #14161c; color: #f2f3f5; padding: 8px 14px; border-radius: 8px;
+  font: 13px "Segoe UI", system-ui, sans-serif; box-shadow: 0 6px 24px rgba(0,0,0,.3); }

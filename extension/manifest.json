@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "Sema – Read Aloud",
+  "version": "0.1.0",
+  "description": "Read any web page, article or email aloud with natural AI voices, with sentence highlighting.",
+  "icons": { "16": "icons/16.png", "48": "icons/48.png", "128": "icons/128.png" },
+  "action": { "default_popup": "popup.html", "default_title": "Sema" },
+  "background": { "service_worker": "background.js" },
+  "permissions": ["contextMenus", "storage", "activeTab", "scripting"],
+  "host_permissions": ["http://127.0.0.1:51789/*", "<all_urls>"],
+  "content_scripts": [
+    { "matches": ["<all_urls>"], "js": ["content.js"], "css": ["content.css"], "run_at": "document_idle", "all_frames": false }
+  ],
+  "options_page": "options.html",
+  "commands": {
+    "read-page": { "suggested_key": { "default": "Alt+Shift+R" }, "description": "Read selection, or the page from the top" },
+    "toggle": { "suggested_key": { "default": "Alt+Shift+K" }, "description": "Pause / resume" }
+  }
+}

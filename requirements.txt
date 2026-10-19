@@ -1,0 +1,27 @@
+# Core (all platforms)
+edge-tts>=7.0
+aiohttp>=3.9
+numpy>=1.26
+miniaudio>=1.59
+sounddevice>=0.4.6
+Pillow>=10.0
+
+# Windows desktop integration
+keyboard>=0.13.5; sys_platform == "win32"
+pystray>=0.19; sys_platform == "win32"
+mss>=9.0; sys_platform == "win32"
+uiautomation>=2.0.18; sys_platform == "win32"
+pywin32>=306; sys_platform == "win32"
+psutil>=5.9; sys_platform == "win32"
+# Built-in Windows OCR (Windows 10/11)
+winrt-runtime>=2.0; sys_platform == "win32"
+winrt-Windows.Foundation>=2.0; sys_platform == "win32"
+winrt-Windows.Foundation.Collections>=2.0; sys_platform == "win32"
+winrt-Windows.Globalization>=2.0; sys_platform == "win32"
+winrt-Windows.Graphics.Imaging>=2.0; sys_platform == "win32"
+winrt-Windows.Media.Ocr>=2.0; sys_platform == "win32"
+winrt-Windows.Storage.Streams>=2.0; sys_platform == "win32"
+
+# Optional extras (uncomment if you want them)
+# piper-tts>=1.3     # offline neural voice
+# pytesseract        # alternative OCR (needs Tesseract installed)
