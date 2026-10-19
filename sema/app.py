@@ -5,6 +5,7 @@ import ctypes
 import logging
 import os
 import sys
+import threading
 import tkinter as tk
 from concurrent.futures import ThreadPoolExecutor
 
@@ -188,6 +189,19 @@ class SemaApp:
         self.icon = pystray.Icon("Sema", _icon_image(), "Sema – press " + hk["read"] + " to read", menu)
         self.icon.run_detached()
 
+    def _warm_natural_voice(self):
+        """Load (and on first run, download) the offline natural voice in the background,
+        so it is ready the moment it is chosen or needed as a fallback."""
+        backend = self.engine.backend("kokoro")
+        if backend.available()[0] and "kokoro" in [self.cfg["backend"], *self.cfg["fallback_order"]]:
+            def load():
+                try:
+                    backend._load()
+                    log.info("natural offline voice ready")
+                except Exception as e:
+                    log.warning("offline voice not ready: %s", e)
+            threading.Thread(target=load, name="sema-kokoro", daemon=True).start()
+
     def quit(self):
         try:
             import keyboard
@@ -204,6 +218,7 @@ class SemaApp:
             server.start(self.engine)
         self.register_hotkeys()
         self.build_tray()
+        self._warm_natural_voice()
         hk = self.cfg["hotkeys"]["read"].upper()
         self.bridge.call(self.player.handle, {"type": "notice", "message": f"Sema is ready. Select text and press {hk}."})
         self.root.mainloop()

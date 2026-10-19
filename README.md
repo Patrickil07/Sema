@@ -50,15 +50,16 @@ Right-click the tray icon and choose **Settings…** to pick a voice engine and 
 | Engine | Quality | Cost | What you need |
 |---|---|---|---|
 | **Microsoft Neural** (default) | Very natural, 400+ voices, many languages | Free | Nothing |
+| **Kokoro** | Natural neural voice that runs on your PC; also the backup when you're offline | Free | Nothing (downloads a 310 MB voice model once, in the background) |
 | **ElevenLabs** | The most human-sounding, very expressive | Paid per character | An API key from elevenlabs.io (Profile, then API keys) |
 | **OpenAI** (`gpt-4o-mini-tts`) | Natural, and follows directions on tone | Paid per use | An API key from platform.openai.com |
 | **Azure Neural** | Studio quality, speaking styles | Free tier, then paid | A Speech resource key and region from portal.azure.com |
 | **Piper** | Good, fully offline | Free | `pip install piper-tts` and a downloaded voice `.onnx` file |
-| **Windows voices** | Basic, offline | Free | Nothing (built in) |
+| **Windows voices** | Robotic, offline; last resort only | Free | Nothing (built in) |
 
-If the chosen engine fails (no internet, quota used up, wrong key), Sema switches to the next engine in `fallback_order` (Microsoft Neural, then Windows voices) and tells you in the player.
+If the chosen engine fails (no internet, quota used up, wrong key), Sema switches to the next engine in `fallback_order` (Microsoft Neural, then Kokoro, then Windows voices) and tells you in the player.
 
-Recommended voices: **Ava** or **Andrew Multilingual** (free), ElevenLabs **George** or **Sarah**, OpenAI **marin** or **cedar**. The multilingual voices detect the language of the text on their own, so French, Spanish or German pages are read by the same voice.
+Recommended voices: **Ava** or **Andrew Multilingual** (free), Kokoro **Heart** or **George** (free, offline), ElevenLabs **George** or **Sarah**, OpenAI **marin** or **cedar**. The multilingual voices detect the language of the text on their own, so French, Spanish or German pages are read by the same voice.
 
 ## Chrome and Edge extension
 

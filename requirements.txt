@@ -5,6 +5,7 @@ numpy>=1.26
 miniaudio>=1.59
 sounddevice>=0.4.6
 Pillow>=10.0
+kokoro-onnx>=0.4      # natural offline voice (model downloads once, ~310 MB)
 
 # Windows desktop integration
 keyboard>=0.13.5; sys_platform == "win32"

@@ -8,8 +8,8 @@ import secrets
 from pathlib import Path
 
 DEFAULTS = {
-    "backend": "edge",                 # edge | openai | elevenlabs | azure | piper | sapi
-    "fallback_order": ["edge", "sapi"],
+    "backend": "edge",                 # edge | kokoro | elevenlabs | openai | azure | piper | sapi
+    "fallback_order": ["edge", "kokoro", "sapi"],
     "speed": 1.0,
     "volume": 1.0,
     "voices": {},                      # backend -> chosen voice id
@@ -36,6 +36,7 @@ DEFAULTS = {
     "elevenlabs": {"api_key": "", "model": "eleven_multilingual_v2"},
     "azure": {"api_key": "", "region": "eastus"},
     "piper": {"model_path": ""},
+    "kokoro": {"model_size": "full"},  # full (best quality, 310 MB) or small (88 MB)
     "edge": {},
     "sapi": {},
 }
@@ -65,6 +66,8 @@ class Config:
                 self.data = _merge(DEFAULTS, json.loads(self.path.read_text(encoding="utf-8")))
             except (OSError, ValueError):
                 pass
+        if self.data["fallback_order"] == ["edge", "sapi"]:  # upgrade from v0.1
+            self.data["fallback_order"] = list(DEFAULTS["fallback_order"])
         if not self.data["server"]["token"]:
             self.data["server"]["token"] = secrets.token_hex(4)
             self.save()

@@ -232,8 +232,10 @@
     if (preferred) { const v = voices.find((x) => x.name === preferred); if (v) return v; }
     const lang = (document.documentElement.lang || navigator.language || "en").slice(0, 2).toLowerCase();
     const ranked = voices.filter((v) => v.lang.toLowerCase().startsWith(lang));
-    const score = (v) => (/Natural/i.test(v.name) ? 4 : 0) + (/Online/i.test(v.name) ? 2 : 0) +
-      (/Google/i.test(v.name) ? 1 : 0) + (/Multilingual/i.test(v.name) ? 1 : 0);
+    // Edge's "Natural" voices are neural; old Windows desktop voices (David, Zira, Mark...) sound robotic
+    const score = (v) => (/Natural/i.test(v.name) ? 6 : 0) + (/Online/i.test(v.name) ? 2 : 0) +
+      (/Google/i.test(v.name) ? 2 : 0) + (/Multilingual/i.test(v.name) ? 1 : 0) +
+      (/\b(David|Zira|Mark|Hazel|George|Susan|Desktop)\b/.test(v.name) && !/Natural/i.test(v.name) ? -5 : 0);
     ranked.sort((a, b) => score(b) - score(a));
     return ranked[0] || voices[0] || null;
   }

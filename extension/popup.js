@@ -28,8 +28,9 @@ $("opts").onclick = (e) => { e.preventDefault(); chrome.runtime.openOptionsPage(
     for (const voice of v.voices) sel.add(new Option(voice.name, voice.id, false, voice.id === v.current));
     sel.onchange = () => send({ type: "set-voice", voice: sel.value });
   } else {
-    $("engine").textContent = eng.settings?.token ? "Sema app not running: using browser voices."
-      : "Using browser voices. Pair the Sema app in Settings for premium AI voices.";
+    $("engine").textContent = (eng.settings?.token ? "The Sema app isn't running, so this uses your browser's voices."
+      : "This uses your browser's voices.") + " For natural AI voices, run the Sema app" +
+      (eng.settings?.token ? "." : " and pair it in Settings.") + " In Edge, pick a voice marked Natural.";
     const fill = () => {
       sel.innerHTML = "";
       const voices = speechSynthesis.getVoices().sort((a, b) => (/Natural|Online/.test(b.name) - /Natural|Online/.test(a.name)));

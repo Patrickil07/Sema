@@ -164,3 +164,11 @@ def test_azure_ssml_style():
     b = AzureBackend({"api_key": "x"})
     ssml = b.build_ssml(SynthRequest("Tom & Jerry <3", "en-US-AriaNeural", azure_style="newscast"), 1.2)
     assert 'style="newscast"' in ssml and "Tom &amp; Jerry &lt;3" in ssml and 'rate="+20%"' in ssml
+
+
+def test_natural_offline_voice_is_the_fallback_before_windows_voices(tmp_path):
+    import json
+    old = tmp_path / "old.json"
+    old.write_text(json.dumps({"fallback_order": ["edge", "sapi"]}))
+    assert Config(old)["fallback_order"] == ["edge", "kokoro", "sapi"]
+    assert "kokoro" in BACKENDS and BACKENDS["kokoro"]({}).default_voice() == "af_heart"
