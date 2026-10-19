@@ -8,7 +8,10 @@
   const SKIP = new Set(["SCRIPT", "STYLE", "NOSCRIPT", "SVG", "CANVAS", "BUTTON", "SELECT", "TEXTAREA",
     "INPUT", "IFRAME", "OBJECT", "TEMPLATE", "VIDEO", "AUDIO", "MATH"]);
   const CHROME_PARTS = "nav, footer, aside, [role=navigation], [role=banner], [role=contentinfo], " +
-    "[role=complementary], [aria-hidden=true], .sema-host";
+    "[role=complementary], .sema-host";
+  // interface bits that are never content, wherever they appear (buttons, timestamps, toolbars)
+  const UI_PARTS = "[role=toolbar], [role=button], [role=status], [role=tooltip], [role=menu], time, " +
+    "[aria-hidden=true], .sema-host";
   const BLOCK = new Set(["P", "DIV", "LI", "H1", "H2", "H3", "H4", "H5", "H6", "BLOCKQUOTE", "TD", "TH",
     "PRE", "FIGCAPTION", "DD", "DT", "SECTION", "ARTICLE", "MAIN", "HEADER", "TR", "CAPTION", "SUMMARY",
     "LABEL", "LEGEND", "BODY", "UL", "OL", "DL", "TABLE", "FORM", "FIELDSET", "DETAILS", "ADDRESS"]);
@@ -39,6 +42,7 @@
       acceptNode(n) {
         if (n.nodeType === 1) {
           if (SKIP.has(n.tagName.toUpperCase()) || n.hidden) return NodeFilter.FILTER_REJECT;
+          if (n !== root && n.matches(UI_PARTS)) return NodeFilter.FILTER_REJECT;
           if (excludeChrome && n !== root && n.matches(CHROME_PARTS)) return NodeFilter.FILTER_REJECT;
           if (!visible(n)) return NodeFilter.FILTER_REJECT;
           return NodeFilter.FILTER_SKIP;
@@ -76,12 +80,16 @@
         text += piece;
       }
       const isHeading = /^H[1-6]$/.test(b.block.tagName);
+      // numbered list items are announced ("3. Double-click setup.bat") like a person reading steps
+      const ol = b.block.tagName === "LI" && b.block.parentElement?.tagName === "OL" ? b.block.parentElement : null;
+      let prefix = ol ? `${[...ol.children].indexOf(b.block) + (ol.start || 1)}. ` : "";
       for (const s of sentences(text)) {
         const range = document.createRange();
         const [sn, so] = locate(map, s.start, false);
         const [en, eo] = locate(map, s.end, true);
         try { range.setStart(sn, so); range.setEnd(en, eo); } catch (e) { continue; }
-        const spoken = s.text.replace(/\s+/g, " ").trim();
+        const spoken = prefix + s.text.replace(/\s+/g, " ").trim();
+        prefix = "";
         if (!/[\p{L}\p{N}]/u.test(spoken)) continue;
         segments.push({ id: "s" + segments.length, text: spoken, range, pause_after_ms: 0 });
       }

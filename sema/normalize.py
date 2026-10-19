@@ -315,6 +315,55 @@ def _drop_emoji(t: str) -> str:
     return "".join(out)
 
 
+_KEYS = {"ctrl": "Control", "control": "Control", "alt": "Alt", "shift": "Shift", "win": "Windows",
+         "windows": "Windows", "cmd": "Command", "command": "Command", "option": "Option", "fn": "Function",
+         "esc": "Escape", "del": "Delete", "pgup": "Page Up", "pgdn": "Page Down", "up": "Up", "down": "Down",
+         "left": "Left", "right": "Right", "enter": "Enter", "tab": "Tab", "space": "Space"}
+_FILE_EXT = ("bat|exe|zip|md|log|py|js|json|txt|pdf|docx?|xlsx?|pptx?|csv|html?|css|png|jpe?g|gif|mp3|"
+             "mp4|wav|msi|ps1|sh|yaml|yml|toml|ini|cfg|onnx")
+_PRODUCTS = ("Python|Node|Node\\.js|Java|iOS|iPadOS|Android|Windows|macOS|Office|Excel|Word|Chrome|Edge|"
+             "Firefox|Ubuntu|Debian|PHP|Ruby|Go|Rust|Swift|Kotlin|Perl|Angular|React|Vue|Django|Rails|"
+             "Bootstrap|Photoshop|Unity|Unreal|GPT|Claude|Gemini|Llama|Mac OS X|OS X|HTML|CSS|Bluetooth|USB|Wi-Fi|PCIe")
+
+
+def _file_base(base: str) -> str:
+    base = re.sub(r"(?:^|(?<=[-_ ]))v(\d+(?:\.\d+)*)\b",
+                  lambda m: "version " + " point ".join(int_to_words(int(x)) for x in m.group(1).split(".")), base)
+    return re.sub(r"[-_]", " ", base).replace(".", " dot ")
+
+
+def _computing(t: str) -> str:
+    """Things people meet on screens: shortcuts, paths, file names, app versions."""
+    # keyboard shortcuts: Alt+Shift+S, Ctrl + C
+    def keys(m):
+        return " ".join(_KEYS.get(k.lower(), k.upper() if len(k) == 1 else k) for k in re.split(r"\s*\+\s*", m.group(0)))
+    t = re.sub(r"\b(?:Ctrl|Control|Alt|Shift|Win|Windows|Cmd|Command|Option|Fn)(?:\s*\+\s*[A-Za-z0-9]+)+\b", keys, t)
+    # Windows paths: C:\Sema, %APPDATA%\Sema\sema.log
+    def path(m):
+        parts = [p for p in re.split(r"[\\/]+", m.group(0)) if p]
+        spoken = []
+        for i, p in enumerate(parts):
+            if i == 0 and re.fullmatch(r"[A-Za-z]:", p):
+                spoken.append(f"{p[0].upper()} drive")
+            elif re.fullmatch(r"%\w+%", p):
+                spoken.append({"%APPDATA%": "App Data", "%USERPROFILE%": "your user folder",
+                               "%LOCALAPPDATA%": "Local App Data", "%TEMP%": "Temp"}.get(p.upper(), p.strip("%")))
+            else:
+                spoken.append(p)
+        return ", ".join(spoken)
+    t = re.sub(r"(?:\b[A-Za-z]:|%\w+%)(?:[\\/][^\s\\/,;:]+)*[\\/]?", path, t)
+    # app links: chrome://extensions
+    t = re.sub(r"\b(chrome|edge|about|brave|opera)://([\w/-]+)",
+               lambda m: f"{m.group(1)} {m.group(2).replace('/', ' ').replace('-', ' ')}", t)
+    # file names: setup.bat -> setup dot bat
+    t = re.sub(rf"\b([\w-]+(?:\.[\w-]+)*)\.({_FILE_EXT})\b",
+               lambda m: _file_base(m.group(1)) + " dot " + m.group(2), t, flags=re.I)
+    # product versions: Python 3.12 -> Python three point twelve
+    t = re.sub(rf"\b({_PRODUCTS})\s+(\d+)\.(\d+)(?:\.(\d+))?\b",
+               lambda m: f"{m.group(1)} " + " point ".join(int_to_words(int(x)) for x in m.groups()[1:] if x), t)
+    return t
+
+
 def _urls_emails(t: str, url_mode: str) -> str:
     def email(m):
         user, domain = m.group(1), m.group(2)
@@ -338,7 +387,7 @@ def _urls_emails(t: str, url_mode: str) -> str:
         return spoken + trail
     t = re.sub(r"\b(?:https?://|www\.)[^\s<>\"]+", url, t, flags=re.I)
     # bare domains like example.com or docs.python.org (only well-known TLDs)
-    t = re.sub(r"\b((?:[a-z0-9-]+\.)+(?:com|org|net|io|ai|dev|edu|gov|co|uk|app|me|info))\b(?![.\w])",
+    t = re.sub(r"\b((?:[a-z0-9-]+\.)+(?:com|org|net|io|ai|dev|edu|gov|co|uk|app|me|info))\b(?!\w|\.\w)",
                lambda m: m.group(1).replace(".", " dot "), t)
     return t
 
@@ -589,7 +638,7 @@ def _symbols(t: str) -> str:
     t = re.sub(r"(?<=\s)×(?=\s)|(?<=\d)\s?[x×]\s?(?=\d)", " by ", t)
     t = re.sub(r"(?<=\s)~(?=\w)|^~(?=\w)", "about ", t)
     t = re.sub(r"(?<=\s)/(?=\s)", " or ", t)
-    t = re.sub(r"\s[-–]>\s|\s→\s", " to ", t)
+    t = re.sub(r"\s[-–]>\s|\s→\s", ", then ", t)
     t = re.sub(r"(?<![\w@])@(\w+)", r"at \1", t)
     t = re.sub(r"(?<![\w&])#([A-Za-z]\w+)", r"hashtag \1", t)
     t = re.sub(r"\s*[—–]\s*|\s+--?\s+", ", ", t)  # dashes become breathing pauses
@@ -626,6 +675,7 @@ def normalize(text: str, *, date_order: str = "MDY", url_mode: str = "domain",
     t = _clean_unicode(text)
     t = _strip_markup(t)
     t = _drop_emoji(t)
+    t = _computing(t)
     t = _urls_emails(t, url_mode)
     english = looks_english(t) if force_english is None else force_english
     if english:

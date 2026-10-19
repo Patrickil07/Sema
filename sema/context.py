@@ -73,13 +73,13 @@ def repair_layout(text: str) -> str:
         if re.fullmatch(r"(?:page\s*)?\d{1,4}(?:\s*(?:of|/)\s*\d{1,4})?", stripped, re.I):
             continue                                              # page numbers
         if _BULLET.match(stripped):
+            num = re.match(r"^\s*\(?(\d{1,3})[.)]\s+", stripped)
             item = _BULLET.sub("", stripped)
             if out and out[-1] != "":
                 if not _SENT_END.search(out[-1]) and not out[-1].endswith(","):
                     out[-1] += "."
                 out.append("")
-            out.append(item if _SENT_END.search(item) else item + ".")
-            out.append("")
+            out.append((f"\ue000{num.group(1)}\ue001" if num else "") + item)
             continue
         if out and out[-1] != "":
             prev = out[-1]
@@ -98,8 +98,95 @@ def repair_layout(text: str) -> str:
         out.append(stripped)
     text = "\n".join(out)
     text = re.sub(r"\n{2,}", "\n\n", text)
-    paragraphs = [re.sub(r"\n", " ", p) for p in text.split("\n\n")]
-    return "\n\n".join(p.strip() for p in paragraphs if p.strip())
+    paragraphs = [re.sub(r"\n", " ", p).strip() for p in text.split("\n\n")]
+    paragraphs = [p if _SENT_END.search(p) else p + "." for p in paragraphs if p]
+    return _number_lists("\n\n".join(paragraphs))
+
+
+_IMPERATIVE = set("""get install open click double-click right-click try run select go add copy paste choose
+download enable disable turn press type enter set create sign log make use restart check save connect
+unzip extract launch start close tick untick remove delete find look visit follow drag drop load
+update upgrade wait confirm review read write send call email fill submit pick switch keep""".split())
+
+
+_COUNT_WORDS = {2: "Two", 3: "Three", 4: "Four", 5: "Five", 6: "Six", 7: "Seven", 8: "Eight", 9: "Nine",
+                10: "Ten", 11: "Eleven", 12: "Twelve"}
+
+
+def _number_lists(text: str) -> str:
+    """Numbered items read as "Step 1." when the list is a set of instructions, else "1."."""
+    paras = text.split("\n\n")
+    out, i = [], 0
+    while i < len(paras):
+        if not paras[i].startswith("\ue000"):
+            out.append(paras[i])
+            i += 1
+            continue
+        j = i
+        while j < len(paras) and paras[j].startswith("\ue000"):
+            j += 1
+        items = paras[i:j]
+        firsts = [re.sub(r"^\ue000\d+\ue001\W*", "", p).split(" ")[0].lower().strip(".:,") for p in items]
+        steps = sum(f in _IMPERATIVE for f in firsts) * 2 >= len(items)
+        if steps and len(items) >= 2:
+            out.append(f"{_COUNT_WORDS.get(len(items), len(items))} steps.")
+        for p in items:
+            out.append(re.sub(r"^\ue000(\d+)\ue001", (r"Step \1. " if steps else r"\1. "), p))
+        i = j
+    return "\n\n".join(out)
+
+
+# Interface text that appears around content in apps and chats, never worth reading aloud
+_UI_CHROME = re.compile(r"""^(?:
+      sent\ to\ ?(?:a|\d+)\ threads?|forwarded\ by\ \w+|edited|copied|copy(?:\ link|\ code)?|reply|
+      replies|share|like|react|more|show\ (?:more|less)|see\ more|read\ more|load\ more|view\ \d*\ ?(?:more\ )?replies|
+      \d+\s?(?:s|m|h|d|w|min|mins|hr|hrs)\ ago|(?:a\ few\ |\d+\ )?(?:seconds?|minutes?|hours?|days?|weeks?)\ ago|
+      just\ now|yesterday|today|seen|delivered|typing…?|
+      (?:zip|pdf|docx?|xlsx?|pptx?|png|jpe?g|csv|txt|md)|
+      [\w\-. ]{1,60}\.(?:zip|pdf|docx?|xlsx?|pptx?|png|jpe?g|csv|txt|md|exe)
+    )$""", re.I | re.X)
+
+
+def strip_ui_chrome(text: str) -> str:
+    """Drop lines that are app interface rather than content: "Sent to a thread", "19m ago",
+    attachment chips, button labels. Only whole lines are removed, never words inside sentences.
+    A removed line also separates what came before from what follows (two chat messages)."""
+    keep = []
+    for ln in text.split("\n"):
+        core = re.sub(r"^[\W_]+|[\W_]+$", "", ln.strip())
+        # icons in front of the label often OCR as 1-3 junk characters: "3 Sent to a thread"
+        core2 = re.sub(r"^(?:\S{1,3}\s+)(?=[A-Za-z\d])", "", core)
+        if core and (_UI_CHROME.match(core) or _UI_CHROME.match(core2)):
+            keep.append("")
+            continue
+        keep.append(ln)
+    return "\n".join(keep)
+
+
+def clean_ocr(text: str) -> str:
+    """Repair what screen OCR adds: icon glyphs read as letters, lost list numbers, stray marks."""
+    out = []
+    last_num = None
+    for ln in text.split("\n"):
+        s = ln.strip()
+        letters = len(re.findall(r"[A-Za-z]", s))
+        if s and (not re.search(r"[A-Za-z]{3,}", s) or letters < len(s) * 0.4) and not re.search(r"\d", s):
+            continue                                       # "G@oa-", "EY": icons, not text
+        if last_num is not None and re.match(r"^[.,·]\s+[A-Z]", s):
+            last_num += 1                                  # "1." survived but "2." became "."
+            s = re.sub(r"^[.,·]\s+", f"{last_num}. ", s)
+        s = re.sub(r"^[^\w\s\"'(]{1,2}\s+", "", s)            # leading icon glyph
+        s = re.sub(r"^[a-z]\s+(?=[A-Z])", "", s)              # "e Language learning mode"
+        s = re.sub(r"(?<=\w)\s+(?:[®©#•]|e)\s+(?=[A-Z\w])", " ", s)  # inline link/file icons
+        s = re.sub(r"(?<=[A-Za-z])\s>\s(?=[A-Z])", " → ", s)   # menu paths: Code > Download ZIP
+        s = re.sub(r"\b(chrome|edge)\s?:\s?//", r"\1://", s)
+        s = re.sub(r"\s&\s(?=[\w-]+\.\w)", " ", s)              # file icon before a file name
+        s = re.sub(r"(\w)(?:\s\.|\.\s)(bat|exe|zip|md|log|txt|pdf|docx|xlsx|pptx)\b", r"\1.\2", s)
+        m = re.match(r"^(\d{1,2})[.)]\s", s)
+        if m:
+            last_num = int(m.group(1))
+        out.append(s)
+    return "\n".join(out)
 
 
 def _looks_heading(line: str) -> bool:
@@ -234,7 +321,9 @@ def prepare(text: str, source: str = "", kind: str | None = None, read_quoted_em
         text = re.sub(r"([a-z])([A-Z])", r"\1 \2", text)  # camelCase -> camel Case
         text = text.replace("_", " ")
     else:
-        text = repair_layout(text)
+        if source == "ocr":
+            text = clean_ocr(text)
+        text = repair_layout(strip_ui_chrome(text))
     mood = detect_mood(text)
     return Prepared(text=text, kind=kind, direction=STYLE_DIRECTIONS[kind], mood=mood,
                     azure_style=AZURE_STYLES.get(kind), meta=meta)

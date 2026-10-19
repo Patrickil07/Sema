@@ -1,0 +1,65 @@
+e Language learning mode
+® language-learning.md
+
+G@oa-
+
+Keep only this one. Note that in It first function text to voice, the
+voices are robotic and not flawless like the recent Ai voices, improve
+on that aspect
+>3 Sent to 2 threads
+WA 19m ago
+I'm taking “Keep only this one” to mean the language note keeps just Engine 1; that’s
+In e Language learning mode . I’ve sent the robotic-voice feedback to
+e Sema screen reader app .
+
+can i test Sema?
+3 Sent toa thread
+
+Yes. You can listen right now In # Sema Preview , which plays the new natural voices.
+Steps for installing the full app on your Windows PC are coming in
+e Sema screen reader app .
+
+Remember Sema would need to work as an extension on Chrome
+and Microsoft apps (edge, word, excel, oneNote etc), Are you able to
+execute?
+3 Sent toa thread
+
+Yes. Chrome and Edge already have the Sema extension, and in Word and Outlook
+the desktop app reads text you select with a hotkey. I’ve asked
+e Sema screen reader app to check Excel and OneNote and fill in anything that’s
+missing.
+
+4 Forwarded by coordinator
+
+Yes, you can test it on your Windows PC in about 10
+minutes:
+
+1. Get the files. Download & sema-v0.1.zip , or use
+Code > Download ZIP on GitHub. Unzip it
+somewhere like C:\Sema.
+. Install Python 3.12 from python.org. In the installer,
+tick “Add python.exe to PATH”.
+. Double-click setup .bat . It installs everything and
+starts Sema. A round purple icon appears in the
+system tray, near the clock.
+. Try It. Select some text In Word, Outlook, Chrome or
+anywhere else, then press Alt+Shift+S. Press
+Alt+Shift+O and drag a box around anything on
+screen to read it with OCR. Alt+Shift+P pauses and
+resumes.
+. Browser extension (optional). Open
+chrome: //extensions or edge://extensions and
+turn on Developer mode. Click Load unpacked and
+choose the extension folder. Then right-click the
+Sema tray icon, choose Copy browser pairing code,
+and paste the code into the extension’s Settings.
+
+For a quick listen without installing anything, the
+& Sema Preview still works. This will be the first time
+Sema runs on real Windows, so if anything doesn’t work,
+tell me what you saw, or send the log at
+%APPDATA%\Sema\sema. log , and I'll fix it.
+EY
+zip
+
+sema-v0.1.zip

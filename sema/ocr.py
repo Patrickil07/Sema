@@ -98,8 +98,51 @@ def recognize(img) -> list[Line]:
     return lines
 
 
+def split_columns(lines: list[Line]) -> list[list[Line]]:
+    """Split side-by-side panels (a chat next to a side panel, newspaper columns) so each is
+    read top to bottom in turn, instead of reading across both on every line."""
+    if len(lines) < 6:
+        return [lines]
+    right = max(ln.x + ln.w for ln in lines)
+    covered = bytearray(right + 1)
+    for ln in lines:
+        covered[ln.x: ln.x + ln.w] = b"\x01" * ln.w
+    min_gap = max(18, right // 50)
+    cuts, run_start = [], None
+    for x in range(right + 1):
+        if not covered[x]:
+            run_start = x if run_start is None else run_start
+        elif run_start is not None:
+            if x - run_start >= min_gap:
+                cuts.append((run_start + x) // 2)
+            run_start = None
+    groups = []
+    edges = [0, *cuts, right + 1]
+    for a, b in zip(edges, edges[1:]):
+        col = [ln for ln in lines if a <= ln.x + ln.w / 2 < b]
+        if col:
+            groups.append(col)
+    # stray labels (a lone number, an icon caption) don't make a column: fold them into a neighbour
+    merged: list[list[Line]] = []
+    for col in groups:
+        if merged and (len(col) < 3 or len(merged[-1]) < 3):
+            merged[-1] = merged[-1] + col
+        else:
+            merged.append(col)
+    return merged
+
+
 def lines_to_text(lines: list[Line]) -> str:
-    """Rebuild paragraphs from OCR lines using vertical gaps and indentation."""
+    """Rebuild paragraphs from OCR lines using vertical gaps, column by column."""
+    if not lines:
+        return ""
+    columns = split_columns(lines)
+    if len(columns) > 1:
+        return "\n\n".join(_column_text(c) for c in columns)
+    return _column_text(lines)
+
+
+def _column_text(lines: list[Line]) -> str:
     if not lines:
         return ""
     lines = sorted(lines, key=lambda ln: (ln.y, ln.x))
