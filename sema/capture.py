@@ -15,6 +15,8 @@ import logging
 import os
 import time
 
+from . import office
+
 log = logging.getLogger("sema")
 
 BROWSERS = {"chrome.exe", "msedge.exe", "firefox.exe", "brave.exe", "opera.exe", "vivaldi.exe", "arc.exe"}
@@ -43,6 +45,12 @@ def source_for(proc: str) -> str:
         return "outlook"
     if proc == "winword.exe":
         return "word"
+    if proc == "excel.exe":
+        return "excel"
+    if proc == "powerpnt.exe":
+        return "powerpoint"
+    if proc in ("onenote.exe", "onenoteim.exe"):
+        return "onenote"
     if proc in BROWSERS:
         return "browser"
     return proc.removesuffix(".exe")
@@ -231,8 +239,16 @@ def get_selection() -> tuple[str, str]:
             sel = _office("Word.Application").Selection
             if sel.Start != sel.End:
                 return sel.Text, src
+        elif src == "excel":
+            text = office.excel_selection(_office("Excel.Application"))
+            if text.strip():
+                return text, src
+        elif src == "powerpoint":
+            text = office.powerpoint_selection(_office("PowerPoint.Application"))
+            if text.strip():
+                return text, src
     except Exception as e:
-        log.debug("word selection: %s", e)
+        log.debug("office selection: %s", e)
     text = ""
     try:
         text = uia_selection()
@@ -240,6 +256,8 @@ def get_selection() -> tuple[str, str]:
         log.debug("uia selection: %s", e)
     if not text:
         text = copy_selection()
+        if src == "excel":
+            text = office.tsv_to_speech(text)
     return text, src
 
 
@@ -254,6 +272,10 @@ def get_document() -> tuple[str, str]:
             text = outlook_message()
             if text:
                 return text, src
+        if src == "excel":
+            return office.excel_sheet(_office("Excel.Application")), src
+        if src == "powerpoint":
+            return office.powerpoint_from_current_slide(_office("PowerPoint.Application")), src
     except Exception as e:
         log.debug("office document: %s", e)
     try:

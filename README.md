@@ -27,6 +27,18 @@ It also:
 
 The free Microsoft neural voices (Ava, Andrew, Emma, Brian and others) work straight away with no account and no key.
 
+### Where it works
+
+| App | Selected text (Alt+Shift+S) | Whole document (Alt+Shift+D) |
+|---|---|---|
+| Chrome, Edge (and other browsers) | Yes, plus the extension's reading bar and highlighting | The article on the page, from the extension or the hotkey |
+| Word | Yes | From the cursor to the end |
+| Outlook | Yes | The open or selected email, skipping old replies |
+| Excel | Selected cells, read with their column headers ("North. Q1: twelve hundred dollars") | The sheet from the selected row down |
+| PowerPoint | Selected text or shapes | From the current slide to the end, with speaker notes |
+| OneNote, Teams, PDF readers, other apps | Yes | Depends on the app; use Alt+Shift+O (OCR) if nothing is read |
+| Anything else on screen (images, video, scans) | Alt+Shift+O, then drag a box | |
+
 ### Hotkeys
 
 | Keys | What it does |
