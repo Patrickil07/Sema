@@ -45,6 +45,8 @@ CASES = [
     ("The FBI and NASA met", "The FBI and NASA met"),
     ("Item #3 is ready", "Item number three is ready"),
     ("It's 10:00", "It's ten o'clock"),
+    ("See pp. 40-52.", "See pages forty to fifty-two."),
+    ("WASHINGTON (Reuters) - Officials said", "WASHINGTON (Reuters), Officials said"),
 ]
 
 

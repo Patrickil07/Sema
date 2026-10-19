@@ -505,7 +505,7 @@ def _ordinals_fractions_ranges(t: str) -> str:
                 b = a[:2] + b
             return year_words(int(a)) + " to " + year_words(int(b))
         return number_words(a) + " to " + number_words(b)
-    t = re.sub(r"(?<![\w.,-])(\d+(?:\.\d+)?)\s?[–—-]\s?(\d+(?:\.\d+)?)(?![\w.-]|\.\d)", rng, t)
+    t = re.sub(r"(?<![\w.,-])(\d+(?:\.\d+)?)\s?[–—-]\s?(\d+(?:\.\d+)?)(?![\w-]|\.\d)", rng, t)
     return t
 
 
@@ -592,7 +592,7 @@ def _symbols(t: str) -> str:
     t = re.sub(r"\s[-–]>\s|\s→\s", " to ", t)
     t = re.sub(r"(?<![\w@])@(\w+)", r"at \1", t)
     t = re.sub(r"(?<![\w&])#([A-Za-z]\w+)", r"hashtag \1", t)
-    t = re.sub(r"\s*[—–]\s*|\s+--\s+", ", ", t)  # dashes become breathing pauses
+    t = re.sub(r"\s*[—–]\s*|\s+--?\s+", ", ", t)  # dashes become breathing pauses
     t = re.sub(r"([!?])\1+", r"\1", t)
     t = re.sub(r"\.{4,}", "...", t)
     t = re.sub(r"[_*=~^|]{3,}", " ", t)  # ascii rules/separators
